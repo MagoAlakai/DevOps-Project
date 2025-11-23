@@ -1,12 +1,34 @@
+version: "3.9"
+
 services:
-    sql-server:
-        container_name: mssql-db
-        image: mcr.microsoft.com/azure-sql-edge
-        environment:
-          ACCEPT_EULA: "Y"
-          MSSQL_SA_PASSWORD: "Vaxi$2025USPass"
-          MSSQL_PID: "Developer"
-        ports:
-         - "1433:1433"
-        
-    
+  sql-server:
+    image: mcr.microsoft.com/azure-sql-edge
+    container_name: sql-server
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: "Iloveswing77!"
+      MSSQL_PID: "Developer"
+    ports:
+      - "11433:1433"
+    volumes:
+      # Datos persistentes del SQL
+      - masternet-sql-data:/var/opt/mssql
+
+  webapi:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: masternet-api
+    environment:
+      ASPNETCORE_ENVIRONMENT: "Development"
+      # La API, dentro de Docker, ve el SQL como 'sql-server'
+      ConnectionStrings__SqlServerDatabase: "Server=sql-server;Database=MasterNetDB;User Id=sa;Password=Iloveswing77!;Encrypt=False;TrustServerCertificate=True;"
+    depends_on:
+      - sql-server
+    ports:
+      # La API escucha en 8080 dentro del contenedor; lo exponemos como 5001
+      - "5001:8080"
+
+volumes:
+  masternet-sql-data:
+    driver: local

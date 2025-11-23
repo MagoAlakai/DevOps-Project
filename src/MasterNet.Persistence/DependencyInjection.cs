@@ -1,10 +1,10 @@
 using MasterNet.Domain.Abstractions;
 using MasterNet.Persistence.Repositories;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Microsoft.EntityFrameworkCore.Infrastructure;
 
 
 namespace MasterNet.Persistence;
@@ -27,8 +27,10 @@ public static class DependencyInjection
             }, LogLevel.Information)
                .EnableSensitiveDataLogging();
 
-            opt.UseSqlite(configuration.GetConnectionString("SqliteDatabase"))
+            opt.UseSqlServer(configuration.GetConnectionString("SqlServerDatabase"));
 
+            //opt.UseSqlite(configuration.GetConnectionString("SqliteDatabase"))
+            opt.UseSqlServer(configuration.GetConnectionString("SqlServerDatabase"))
                .UseAsyncSeeding(async (context, serviceProvider, cancellationToken) =>
                {
                    var dbContext = (MasterNetDbContext)context;

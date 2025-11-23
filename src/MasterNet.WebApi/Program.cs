@@ -10,6 +10,7 @@ using MasterNet.WebApi.Middleware;
 using Microsoft.AspNetCore.OData;
 using Microsoft.OData.Edm;
 using Microsoft.OData.ModelBuilder;
+using Swashbuckle.AspNetCore.SwaggerGen;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddHealthChecks();
@@ -53,10 +54,9 @@ builder.Services.AddControllers()
 
 
 // builder.Services.AddEndpointsApiExplorer();
-// builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen();
 
-
-//builder.Services.AddSwaggerDocumentation();
+builder.Services.AddSwaggerDocumentation();
 
 builder.Services.AddCors(o => o.AddPolicy("corsapp", builder =>
 {
@@ -64,6 +64,16 @@ builder.Services.AddCors(o => o.AddPolicy("corsapp", builder =>
 }));
 
 var app = builder.Build();
+
+app.UseSwagger();
+app.UseSwaggerUI(c =>
+{
+    c.SwaggerEndpoint("/swagger/v1/swagger.json", "v1");
+    c.RoutePrefix = "swagger";
+    c.DisplayRequestDuration();
+    c.EnableDeepLinking();
+    c.ShowExtensions();
+});
 app.MapHealthChecks("/health");
 app.UseMiddleware<ExceptionMiddleware>();
 
