@@ -64,4 +64,4 @@ jobs:
           environmentVariables: |
             ASPNETCORE_ENVIRONMENT=Development
             ASPNETCORE_URLS=http://+:8080
-            ConnectionStrings__SqlServerDatabase=${{ secrets.SQL_CONNECTION_STRING }}
+            ConnectionStrings__SqlServerDatabase=${{ secrets.SQL_DB_CONNECTIONSTRING }}
