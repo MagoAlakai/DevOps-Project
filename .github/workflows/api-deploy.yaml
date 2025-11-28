@@ -51,6 +51,13 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
+      - name: Set DB connection string secret in Container App
+        run: |
+          az containerapp secret set \
+            --name mago-devops-dev-eus-app \
+            --resource-group mago-devops-dev-eus-rg \
+            --secrets sql-connection-string="${{ secrets.SQL_CONNECTION_STRING }}"
+
       - name: Deploy to Azure Container Apps
         uses: azure/container-apps-deploy-action@v1
         with:
@@ -62,5 +69,5 @@ jobs:
           targetPort: 8080
           ingress: external
           environmentVariables: |
-            ASPNETCORE_ENVIRONMENT=Development ASPNETCORE_URLS=http://+:8080 ConnectionStrings__SqlServerDatabase=${{ secrets.SQL_DB_CONNECTIONSTRING }}
+            ASPNETCORE_ENVIRONMENT=Development ASPNETCORE_URLS=http://+:8080 ConnectionStrings__SqlServerDatabase=secretref:sql-connection-string
 
