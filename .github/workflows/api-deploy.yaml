@@ -39,7 +39,8 @@ jobs:
             -t $ACR_REGISTRY/netapp:$IMAGE_TAG \
             -t $ACR_REGISTRY/netapp:latest \
             .
-          docker push $ACR_REGISTRY/netapp --att-tags
+          docker push $ACR_REGISTRY/netapp:$IMAGE_TAG
+          docker push $ACR_REGISTRY/netapp:latest
 
   deploy-app-to-aca:
     needs: build-and-deploy
