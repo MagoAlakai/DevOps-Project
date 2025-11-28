@@ -53,6 +53,8 @@ jobs:
 
       - name: Deploy to Azure Container Apps
         uses: azure/container-apps-deploy-action@v1
+        env:
+          PASSWORD: ${{ vars.SQL_DB_CONNECTIONSTRING }}
         with:
           imageToDeploy: ${{ vars.ACR_SERVER }}/netapp:${{ github.sha }}
           registryUrl: ${{ vars.ACR_SERVER }}
@@ -62,5 +64,5 @@ jobs:
           targetPort: 8080
           ingress: external
           environmentVariables: |
-            ASPNETCORE_ENVIRONMENT=Development ASPNETCORE_URLS=http://+:8080 ConnectionStrings__SqlServerDatabase=${{ secrets.SQL_DB_CONNECTIONSTRING }}
+            ASPNETCORE_ENVIRONMENT=Development ASPNETCORE_URLS=http://+:8080 ConnectionStrings__SqlServerDatabase=$PASSWORD
 
