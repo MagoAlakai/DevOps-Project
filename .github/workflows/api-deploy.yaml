@@ -8,6 +8,9 @@ on:
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
+    outputs:
+      short_sha: ${{ steps.vars.outputs.short_sha }}
+
     steps:
       - name: Checkout Repository
         id: github
@@ -55,14 +58,19 @@ jobs:
         uses: azure/login@v1
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
-      # - name: Deploy to Azure Container Apps
-      #   uses: azure/cli@v1
-      #   with:
-      #     inlineScript: |
-      #       az containerapp update \
-      #         --name ${{ vars.ACA_NAME }} \
-      #         --resource-group ${{ vars.ACA_RESOURCE_GROUP }} \
-      #         --image ${{ vars.ACR_SERVER }}/netapp:${{ needs.build-and-deploy.outputs.short_sha }} \
-      #         --registry-server ${{ vars.ACR_SERVER }} \
-      #         --registry-username ${{ secrets.ACR_USERNAME }} \
-      #         --registry-password ${{ secrets.ACR_PASSWORD }}
+
+      - name: Deploy to Azure Container Apps
+        uses: azure/container-apps-deploy-action@v1
+        env:
+          ACR_SERVER: ${{ vars.ACR_SERVER }}
+          IMAGE_TAG: ${{ needs.build-and-deploy.outputs.short_sha }}
+        with:
+          registryUrl: ${{ vars.ACR_SERVER }}
+          imageToDeploy: $ACR_SERVER/app:$IMAGE_TAG
+          targetPort: 8080
+          ingress: external
+          containerAppName: mago-devops-dev-eus-app
+          containerAppEnviroment: mago-devops-dev-eus-acae
+          resourceGroup: mago-devops-dev-eus-rg
+          enviromentVariables:
+            ASPNETCORE_ENVIRONMENT=Development ASPNETCORE_URLS=http://+:8080
