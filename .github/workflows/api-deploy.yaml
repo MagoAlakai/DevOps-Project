@@ -25,14 +25,9 @@ jobs:
           username: ${{ secrets.ACR_USERNAME }}
           password: ${{ secrets.ACR_PASSWORD }}
 
-      - name: SHA from commit
-        id: get_sha
-        run: |
-          echo "short_sha=$(echo ${GITHUB_SHA} | cut -c1-7)" >> $GITHUB_OUTPUT
-
       - name: Build and push docker image to ACR
         env:
-          ACR_REGISTRY: ${{ vars.ACR_SERVER }}    # ej: magodevopsdeveusacr.azurecr.io
+          ACR_REGISTRY: ${{ vars.ACR_SERVER }} 
         run: |
           # Usamos los primeros 7 caracteres del SHA del commit como tag
           echo "GITHUB_SHA = $GITHUB_SHA"
@@ -61,7 +56,7 @@ jobs:
       - name: Deploy to Azure Container Apps
         uses: azure/container-apps-deploy-action@v1
         env:
-          IMAGE_TAG: ${{ needs.build-and-deply.outputs.short_sha }}
+          IMAGE_TAG: ${{ needs.build-and-deploy.outputs.short_sha }}
           ACR_SERVER: ${{ vars.ACR_SERVER }}
           PASSWORD: ${{ secrets.SQL_DB_CONNECTIONSTRING }}
         with:
