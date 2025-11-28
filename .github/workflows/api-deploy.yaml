@@ -78,7 +78,7 @@ jobs:
           ingress: external
           # 👇 usa el nombre real de tu secret (SQL_CONNECTION_STRING o SQL_DB_CONNECTIONSTRING)
           environmentVariables: >
-            ASPNETCORE_ENVIRONMENT=Development ASPNETCORE_URLS=http://+:8080 ConnectionStrings__SqlServerDatabase=${{ secrets.SQL_CONNECTION_STRING }}
+            ASPNETCORE_ENVIRONMENT=Development ASPNETCORE_URLS=http://+:8080 ConnectionStrings__SqlServerDatabase=${{ secrets.SQL_DB_CONNECTIONSTRING }}
 
 
 
