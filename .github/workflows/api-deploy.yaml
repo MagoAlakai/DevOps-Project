@@ -47,15 +47,22 @@ jobs:
           docker push $ACR_REGISTRY/netapp:$IMAGE_TAG
           docker push $ACR_REGISTRY/netapp:latest
 
-      # - name: Restore dependencies
-      #   run: dotnet restore src/MasterNet.WebApi/MasterNet.WebApi.csproj
-      # - name: Build the project
-      #   run: dotnet build --configuration Release --no-restore YourApiProject/YourApiProject.csproj
-      # - name: Publish the project
-      #   run: dotnet publish --configuration Release --no-build --output ./publish YourApiProject/YourApiProject.csproj
-      # - name: Deploy to Azure Web App
-      #   uses: azure/webapps-deploy@v2
+  deploy-app-to-aca:
+    needs: build-and-deploy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+      # - name: Deploy to Azure Container Apps
+      #   uses: azure/cli@v1
       #   with:
-      #     app-name: 'YourAzureWebAppName'
-      #     publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
-      #     package: ./publish  
+      #     inlineScript: |
+      #       az containerapp update \
+      #         --name ${{ vars.ACA_NAME }} \
+      #         --resource-group ${{ vars.ACA_RESOURCE_GROUP }} \
+      #         --image ${{ vars.ACR_SERVER }}/netapp:${{ needs.build-and-deploy.outputs.short_sha }} \
+      #         --registry-server ${{ vars.ACR_SERVER }} \
+      #         --registry-username ${{ secrets.ACR_USERNAME }} \
+      #         --registry-password ${{ secrets.ACR_PASSWORD }}
