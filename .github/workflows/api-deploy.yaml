@@ -32,15 +32,21 @@ jobs:
 
       - name: Build and push docker image to ACR
         env:
-          ACR_REGISTRY: ${{ vars.ACR_SERVER }}
-          IMAGE_TAG: ${{ steps.vars.outputs.short_sha }}
+          ACR_REGISTRY: ${{ vars.ACR_SERVER }}    # ej: magodevopsdeveusacr.azurecr.io
         run: |
+          # Usamos los primeros 7 caracteres del SHA del commit como tag
+          echo "GITHUB_SHA = $GITHUB_SHA"
+          IMAGE_TAG=${GITHUB_SHA::7}
+          echo "Using IMAGE_TAG=$IMAGE_TAG"
+
           docker build -f Dockerfile \
             -t $ACR_REGISTRY/netapp:$IMAGE_TAG \
             -t $ACR_REGISTRY/netapp:latest \
             .
+
           docker push $ACR_REGISTRY/netapp:$IMAGE_TAG
           docker push $ACR_REGISTRY/netapp:latest
+
 
   deploy-app-to-aca:
     needs: build-and-deploy
