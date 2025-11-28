@@ -54,9 +54,6 @@ jobs:
       - name: Deploy to Azure Container Apps
         uses: azure/container-apps-deploy-action@v1
         with:
-          # IMPORTANTE:
-          # vars.ACR_SERVER debe ser algo como: magodevopsdeveusacr.azurecr.io
-          # y el repo es "netapp", igual que en el build
           imageToDeploy: ${{ vars.ACR_SERVER }}/netapp:${{ github.sha }}
           registryUrl: ${{ vars.ACR_SERVER }}
           containerAppName: mago-devops-dev-eus-app
@@ -64,6 +61,7 @@ jobs:
           resourceGroup: mago-devops-dev-eus-rg
           targetPort: 8080
           ingress: external
-          environmentVariables: >
+          environmentVariables: |
             ASPNETCORE_ENVIRONMENT=Development
             ASPNETCORE_URLS=http://+:8080
+            ConnectionStrings__SqlServerDatabase=${{ secrets.SQL_CONNECTION_STRING }}
