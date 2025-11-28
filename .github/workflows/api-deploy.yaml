@@ -61,7 +61,6 @@ jobs:
           resourceGroup: mago-devops-dev-eus-rg
           targetPort: 8080
           ingress: external
-          environmentVariables: >
-            "ASPNETCORE_ENVIRONMENT=Development"
-            "ASPNETCORE_URLS=http://+:8080"
-            "ConnectionStrings__SqlServerDatabase=${{ secrets.SQL_DB_CONNECTIONSTRING }}"
+          environmentVariables: |
+            "ASPNETCORE_ENVIRONMENT=Development" "ASPNETCORE_URLS=http://+:8080" "ConnectionStrings__SqlServerDatabase=${{ secrets.SQL_DB_CONNECTIONSTRING }}"
+
