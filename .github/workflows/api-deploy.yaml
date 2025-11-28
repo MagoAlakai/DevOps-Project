@@ -62,5 +62,7 @@ jobs:
           targetPort: 8080
           ingress: external
           environmentVariables: |
-            "ASPNETCORE_ENVIRONMENT=Development" "ASPNETCORE_URLS=http://+:8080" "ConnectionStrings__SqlServerDatabase=${{ secrets.SQL_DB_CONNECTIONSTRING }}"
+            ASPNETCORE_ENVIRONMENT=Development
+            ASPNETCORE_URLS=http://+:8080
+            ConnectionStrings__SqlServerDatabase=${{ secrets.SQL_CONNECTION_STRING }}
 
