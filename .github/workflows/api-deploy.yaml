@@ -1,4 +1,4 @@
-name: Build and Deploy Web Api to Azure
+﻿name: Build and Deploy Web Api to Azure
 
 on:
   push:
@@ -9,6 +9,10 @@ jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
 
+    # 👉 outputs del JOB (para usarlos en el deploy)
+    outputs:
+      image_tag: ${{ steps.get_sha.outputs.short_sha }}
+
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
@@ -16,26 +20,30 @@ jobs:
       - name: Set up WebApi .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '10.0.x'
+          # pon aquí la versión real (6.0.x, 7.0.x, 8.0.x...)
+          dotnet-version: '8.0.x'
 
       - name: Configure Azure ACR
         uses: azure/docker-login@v2
         with:
-          login-server: ${{ vars.ACR_SERVER }}
+          login-server: ${{ vars.ACR_SERVER }}    # ej: magodevopsdeveusacr.azurecr.io
           username: ${{ secrets.ACR_USERNAME }}
           password: ${{ secrets.ACR_PASSWORD }}
 
+      # 👉 1. calcular el tag y exponerlo como output del step
       - name: SHA from commit
         id: get_sha
         run: |
-          echo "short_sha=$(echo ${GITHUB_SHA} | cut -c1-7)" >> $GITHUB_OUTPUT
+          short_sha=${GITHUB_SHA::7}
+          echo "short_sha=$short_sha"
+          echo "short_sha=$short_sha" >> $GITHUB_OUTPUT
 
+      # 👉 2. usar ese tag para el build/push
       - name: Build and push docker image to ACR
         env:
           ACR_REGISTRY: ${{ vars.ACR_SERVER }}
+          IMAGE_TAG: ${{ steps.get_sha.outputs.short_sha }}
         run: |
-          echo "GITHUB_SHA = $GITHUB_SHA"
-          IMAGE_TAG=${GITHUB_SHA::7}
           echo "Using IMAGE_TAG=$IMAGE_TAG"
 
           docker build -f Dockerfile \
@@ -59,18 +67,94 @@ jobs:
 
       - name: Deploy to Azure Container Apps
         uses: azure/container-apps-deploy-action@v1
-        env:
-          IMAGE_TAG: ${{ needs.build-and-deploy.outputs.short_sha }}
-          ACR_SERVER: ${{ vars.ACR_SERVER }}
-          PASSWORD: ${{ secrets.SQL_DB_CONNECTIONSTRING }}
         with:
+          # 👇 aquí usamos el output del job anterior
+          imageToDeploy: ${{ vars.ACR_SERVER }}/netapp:${{ needs.build-and-deploy.outputs.image_tag }}
           registryUrl: ${{ vars.ACR_SERVER }}
-          imageToDeploy: $ACR_SERVER/netapp:$IMAGE_TAG
-          targetPort: 8080
-          ingress: external
           containerAppName: mago-devops-dev-eus-app
           containerAppEnvironment: mago-devops-dev-eus-acae
           resourceGroup: mago-devops-dev-eus-rg
-          environmentVariables: |
-            ASPNETCORE_ENVIRONMENT=Development ASPNETCORE_URLS=http://+:8080 ConnectionStrings__SqlServerDatabase=$PASSWORD
+          targetPort: 8080
+          ingress: external
+          # 👇 usa el nombre real de tu secret (SQL_CONNECTION_STRING o SQL_DB_CONNECTIONSTRING)
+          environmentVariables: >
+            ASPNETCORE_ENVIRONMENT=Development ASPNETCORE_URLS=http://+:8080 ConnectionStrings__SqlServerDatabase=${{ secrets.SQL_CONNECTION_STRING }}
+
+
+
+# name: Build and Deploy Web Api to Azure
+
+# on:
+#   push:
+#     branches:
+#       - master
+
+# jobs:
+#   build-and-deploy:
+#     runs-on: ubuntu-latest
+
+#     steps:
+#       - name: Checkout Repository
+#         uses: actions/checkout@v4
+
+#       - name: Set up WebApi .NET
+#         uses: actions/setup-dotnet@v4
+#         with:
+#           dotnet-version: '10.0.x'
+
+#       - name: Configure Azure ACR
+#         uses: azure/docker-login@v2
+#         with:
+#           login-server: ${{ vars.ACR_SERVER }}
+#           username: ${{ secrets.ACR_USERNAME }}
+#           password: ${{ secrets.ACR_PASSWORD }}
+
+#       - name: SHA from commit
+#         id: get_sha
+#         run: |
+#           echo "short_sha=$(echo ${GITHUB_SHA} | cut -c1-7)" >> $GITHUB_OUTPUT
+
+#       - name: Build and push docker image to ACR
+#         env:
+#           ACR_REGISTRY: ${{ vars.ACR_SERVER }}
+#         run: |
+#           echo "GITHUB_SHA = $GITHUB_SHA"
+#           IMAGE_TAG=${GITHUB_SHA::7}
+#           echo "Using IMAGE_TAG=$IMAGE_TAG"
+
+#           docker build -f Dockerfile \
+#             -t $ACR_REGISTRY/netapp:$IMAGE_TAG \
+#             -t $ACR_REGISTRY/netapp:latest \
+#             .
+
+#           docker push $ACR_REGISTRY/netapp:$IMAGE_TAG
+#           docker push $ACR_REGISTRY/netapp:latest
+
+
+#   deploy-app-to-aca:
+#     needs: build-and-deploy
+#     runs-on: ubuntu-latest
+
+#     steps:
+#       - name: Azure Login
+#         uses: azure/login@v1
+#         with:
+#           creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+#       - name: Deploy to Azure Container Apps
+#         uses: azure/container-apps-deploy-action@v1
+#         env:
+#           IMAGE_TAG: ${{ needs.build-and-deploy.outputs.short_sha }}
+#           ACR_SERVER: ${{ vars.ACR_SERVER }}
+#           PASSWORD: ${{ secrets.SQL_DB_CONNECTIONSTRING }}
+#         with:
+#           registryUrl: ${{ vars.ACR_SERVER }}
+#           imageToDeploy: $ACR_SERVER/netapp:$IMAGE_TAG
+#           targetPort: 8080
+#           ingress: external
+#           containerAppName: mago-devops-dev-eus-app
+#           containerAppEnvironment: mago-devops-dev-eus-acae
+#           resourceGroup: mago-devops-dev-eus-rg
+#           environmentVariables: |
+#             ASPNETCORE_ENVIRONMENT=Development ASPNETCORE_URLS=http://+:8080 ConnectionStrings__SqlServerDatabase=$PASSWORD
 
