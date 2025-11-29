@@ -78,7 +78,6 @@ jobs:
         env:
           IMAGE_TAG: ${{ needs.build-and-deploy.outputs.image_tag }}
           ACR_SERVER: ${{ vars.ACR_SERVER }}
-          SQL_CONN: ${{ secretref:sql-connection-string }}
         with:
           # 👇 aquí usamos el output del job anterior
           imageToDeploy: ${{ env.ACR_SERVER }}/netapp:${{ env.IMAGE_TAG }}
@@ -89,5 +88,5 @@ jobs:
           targetPort: 8080
           ingress: external
           environmentVariables: |
-            ASPNETCORE_ENVIRONMENT=Development ASPNETCORE_URLS=http://+:8080 ConnectionStrings__SqlServerDatabase=$SQL_CONN
+            ASPNETCORE_ENVIRONMENT=Development ASPNETCORE_URLS=http://+:8080 ConnectionStrings__SqlServerDatabase=${{ secretref:sql-connection-string }}
 
