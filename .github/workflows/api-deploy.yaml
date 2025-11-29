@@ -65,13 +65,15 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      # - name: Set DB connection string secret in Container App
-      #   run: |
-      #     CONNECTION_STRING="${{ secrets.SQL_DB_CONNECTIONSTRING }}"
-      #     az containerapp secret set \
-      #       --name mago-devops-dev-eus-app \
-      #       --resource-group mago-devops-dev-eus-rg \
-      #       --secrets sql-connection-string=$CONNECTION_STRING
+      - name: Set DB connection string secret in Container App
+        run: |
+          set +H
+          CONNECTION_STRING='${{ secrets.SQL_DB_CONNECTIONSTRING }}'
+          echo "Longitud de la cadena: $(printf '%s' "$CONNECTION_STRING" | wc -c)"
+          az containerapp secret set \
+            --name mago-devops-dev-eus-app \
+            --resource-group mago-devops-dev-eus-rg \
+            --secrets sql-connection-string="$CONNECTION_STRING"
 
       - name: Deploy to Azure Container Apps
         uses: azure/container-apps-deploy-action@v1
@@ -85,4 +87,4 @@ jobs:
           targetPort: 8080 # puerto donde escucha la API dentro del contenedor, pero en el documento de App poner 80
           ingress: external
           environmentVariables: |
-            ASPNETCORE_ENVIRONMENT=Development ASPNETCORE_URLS=http://+:8080 ConnectionStrings__SqlServerDatabase=${{ secrets.SQL_DB_CONNECTIONSTRING }}
+            ASPNETCORE_ENVIRONMENT=Development ASPNETCORE_URLS=http://+:8080 ConnectionStrings__SqlServerDatabase=secretref:sql-connection-string
