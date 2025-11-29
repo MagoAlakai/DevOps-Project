@@ -84,7 +84,7 @@ jobs:
           containerAppName: mago-devops-dev-eus-app
           containerAppEnvironment: mago-devops-dev-eus-acae
           resourceGroup: mago-devops-dev-eus-rg
-          targetPort: 8080 # puerto donde escucha la API dentro del contenedor, pero en el documento de App poner 80
+          targetPort: 8080
           ingress: external
           environmentVariables: |
             ASPNETCORE_ENVIRONMENT=Development ASPNETCORE_URLS=http://+:8080 ConnectionStrings__SqlServerDatabase=secretref:sql-connection-string
