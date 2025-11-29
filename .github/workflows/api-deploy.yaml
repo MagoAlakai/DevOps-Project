@@ -75,18 +75,14 @@ jobs:
 
       - name: Deploy to Azure Container Apps
         uses: azure/container-apps-deploy-action@v1
-        env:
-          IMAGE_TAG: ${{ needs.build-and-deploy.outputs.image_tag }}
-          ACR_SERVER: ${{ vars.ACR_SERVER }}
         with:
           # 👇 aquí usamos el output del job anterior
-          imageToDeploy: ${{ env.ACR_SERVER }}/netapp:${{ env.IMAGE_TAG }}
-          registryUrl: ${{ env.ACR_SERVER }}
+          imageToDeploy: ${{ vars.ACR_SERVER }}/netapp:${{ needs.build-and-deploy.outputs.image_tag }}
+          registryUrl: ${{ vars.ACR_SERVER }}
           containerAppName: mago-devops-dev-eus-app
           containerAppEnvironment: mago-devops-dev-eus-acae
           resourceGroup: mago-devops-dev-eus-rg
           targetPort: 8080
           ingress: external
           environmentVariables: |
-            ASPNETCORE_ENVIRONMENT=Development ASPNETCORE_URLS=http://+:8080 ConnectionStrings__SqlServerDatabase=${{ secretref:sql-connection-string }} # connection string from secret
-
+            ASPNETCORE_ENVIRONMENT=Development ASPNETCORE_URLS=http://+:8080 ConnectionStrings__SqlServerDatabase=secretref:sql-connection-string
