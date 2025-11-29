@@ -8,7 +8,7 @@ resource "azurerm_container_app" "app" {
         min_replicas = 1
         max_replicas = 3
         container {
-            name = "my-mago-devops-dev-eus-container"
+            name = "stub"
             image = "mcr.microsoft.com/k8se/quickstart:latest"
             cpu = 0.25
             memory = "0.5Gi"
@@ -18,7 +18,7 @@ resource "azurerm_container_app" "app" {
     ingress {
         allow_insecure_connections = false
         external_enabled = true
-        target_port = 8080
+        target_port = 80
         traffic_weight {
             label = "primary"
             percentage = 100
@@ -26,8 +26,14 @@ resource "azurerm_container_app" "app" {
         }
     }
 
+    lifecycle {
+        ignore_changes = [
+            template, ingress, registry, secret
+        ]
+    }
+
     tags = {
         enviroment = var.env_id
         src = var.src
     }
-}
+ }
