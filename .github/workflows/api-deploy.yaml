@@ -71,7 +71,7 @@ jobs:
           az containerapp secret set \
             --name mago-devops-dev-eus-app \
             --resource-group mago-devops-dev-eus-rg \
-            --secrets sql-connection-string="$CONNECTION_STRING"
+            --secrets sql-connection-string=$CONNECTION_STRING
 
       - name: Deploy to Azure Container Apps
         uses: azure/container-apps-deploy-action@v1
