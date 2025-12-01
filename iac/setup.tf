@@ -5,7 +5,7 @@ terraform{
         version = "4.54.0"
       }
     }
-
+    #creación pipeline IaC
     backend "azurerm" {
         resource_group_name  = "mago-iac-dev-eus-rg"
         storage_account_name = "magoiacdeveusac"
