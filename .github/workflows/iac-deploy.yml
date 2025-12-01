@@ -30,4 +30,5 @@ jobs:
           terraform_version: ${{ env.TF_VERSION }}
 
       - name: Terraform Init
-        run: terraform init ./IaC
+        run: terraform init 
+        working-directory: ./iac
