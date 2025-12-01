@@ -1,0 +1,99 @@
+﻿name: Build and Deploy Web Api to Azure
+
+on:
+  push:
+    branches:
+      - master
+  workflow_run:
+    workflows: ["IaC CI Deployment"]
+    types: [completed]
+    branches: [master]
+
+concurrency:
+  group: aca-dev
+  cancel-in-progress: false
+
+jobs:
+  build-and-deploy:
+    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name != 'workflow_run' }}
+    runs-on: ubuntu-latest
+
+    # 👉 outputs del JOB (para usarlos en el deploy)
+    outputs:
+      image_tag: ${{ steps.get_sha.outputs.short_sha }}
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up WebApi .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          # pon aquí la versión real (6.0.x, 7.0.x, 8.0.x...)
+          dotnet-version: '8.0.x'
+
+      - name: Configure Azure ACR
+        uses: azure/docker-login@v2
+        with:
+          login-server: ${{ vars.ACR_SERVER }}    # ej: magodevopsdeveusacr.azurecr.io
+          username: ${{ secrets.ACR_USERNAME }}
+          password: ${{ secrets.ACR_PASSWORD }}
+
+      # 👉 1. calcular el tag y exponerlo como output del step
+      - name: SHA from commit
+        id: get_sha
+        run: |
+          short_sha=${GITHUB_SHA::7}
+          echo "short_sha=$short_sha"
+          echo "short_sha=$short_sha" >> $GITHUB_OUTPUT
+
+      # 👉 2. usar ese tag para el build/push
+      - name: Build and push docker image to ACR
+        env:
+          ACR_REGISTRY: ${{ vars.ACR_SERVER }}
+          IMAGE_TAG: ${{ steps.get_sha.outputs.short_sha }}
+        run: |
+          echo "Using IMAGE_TAG=$IMAGE_TAG"
+
+          docker build -f Dockerfile \
+            -t $ACR_REGISTRY/netapp:$IMAGE_TAG \
+            -t $ACR_REGISTRY/netapp:latest \
+            .
+
+          docker push $ACR_REGISTRY/netapp:$IMAGE_TAG
+          docker push $ACR_REGISTRY/netapp:latest
+
+
+  deploy-app-to-aca:
+    needs: build-and-deploy
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Set DB connection string secret in Container App
+        run: |
+          set +H
+          CONNECTION_STRING='${{ secrets.SQL_DB_CONNECTIONSTRING }}'
+          echo "Longitud de la cadena: $(printf '%s' "$CONNECTION_STRING" | wc -c)"
+          az containerapp secret set \
+            --name mago-devops-dev-eus-app \
+            --resource-group mago-devops-dev-eus-rg \
+            --secrets sql-connection-string="$CONNECTION_STRING"
+
+      - name: Deploy to Azure Container Apps
+        uses: azure/container-apps-deploy-action@v1
+        with:
+          # 👇 aquí usamos el output del job anterior
+          imageToDeploy: ${{ vars.ACR_SERVER }}/netapp:${{ needs.build-and-deploy.outputs.image_tag }}
+          registryUrl: ${{ vars.ACR_SERVER }}
+          containerAppName: mago-devops-dev-eus-app
+          containerAppEnvironment: mago-devops-dev-eus-acae
+          resourceGroup: mago-devops-dev-eus-rg
+          targetPort: 8080 # Puerto donde escucha la API dentro del contenedor, pero 80 en archivo de app
+          ingress: external
+          environmentVariables: 
+            ASPNETCORE_ENVIRONMENT=Development ASPNETCORE_URLS=http://+:8080 ConnectionStrings__SqlServerDatabase=secretref:sql-connection-string
