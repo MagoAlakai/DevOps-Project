@@ -29,6 +29,22 @@ jobs:
         with:
           terraform_version: ${{ env.TF_VERSION }}
 
-      - name: Terraform Init inicialization
+      - name: Terraform Init
         run: terraform init 
         working-directory: ./iac
+
+      - name: Terraform Validate
+        run: terraform validate 
+        working-directory: ./iac
+
+      - name: Terraform Plan
+        run: terraform plan --out=tfplan
+        working-directory: ./iac
+
+      - name: Terraform Apply
+        run: terraform apply -auto-approve tfplan 
+        working-directory: ./iac
+
+      - name: Notify Failure
+        if: failure()
+        run: echo "Terraform deployment failed! Errors ${{ github.ref_name }}"
